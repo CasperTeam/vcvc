@@ -25,10 +25,8 @@ from pyrogram.errors.exceptions.bad_request_400 import (
     MessageIdInvalid, 
     MessageNotModified
 )
-from pyrogram.types import (
-    InlineKeyboardMarkup, 
-    InlineKeyboardButton
-)
+from pyrogram.types import CallbackQuery, ChatPermissions, InlineKeyboardButton, InlineKeyboardMarkup, Message
+
 from utils import (
     cancel_all_schedules,
     edit_config, 
