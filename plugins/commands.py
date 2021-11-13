@@ -56,6 +56,13 @@ if Config.DATABASE_URI:
 command = partial(filters.command, prefixes=list("#!"))
 HOME_TEXT = "<b>Hey  [{}](tg://user?id={}) 🙋‍♂️\n\nIam A Bot Built To Play or Stream Videos In Telegram VoiceChats.\nI Can Stream Any YouTube Video Or A Telegram File Or Even A YouTube Live.</b>"
 admin_filter=filters.create(is_admin) 
+@Client.on_message(command("ping"))
+async def ping(_, message: Message):
+    """Ping the assistant"""
+    start = time.time()
+    reply = await message.reply_text("...")
+    delta_ping = time.time() - start
+    await reply.edit_text(f"**Pong!** `{delta_ping * 1000:.3f} ms`")
 
 @Client.on_message(filters.command(['start', f"start@{Config.BOT_USERNAME}"]))
 async def start(client, message):
