@@ -12,6 +12,8 @@
 
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import time
+from functools import partial, wraps
 
 from utils import LOGGER
 from youtube_search import YoutubeSearch
@@ -64,8 +66,9 @@ from pyrogram import (
 
 
 admin_filter=filters.create(is_admin) 
-
-@Client.on_message(filters.command(["play", "fplay", f"play@{Config.BOT_USERNAME}", f"fplay@{Config.BOT_USERNAME}"]) & chat_filter)
+command = partial(filters.command, prefixes=list("#!"))
+from pyrogram.types import CallbackQuery, ChatPermissions, InlineKeyboardButton, InlineKeyboardMarkup, Message
+@Client.on_message(command("play"), filters.command(["play", "fplay", f"play@{Config.BOT_USERNAME}", f"fplay@{Config.BOT_USERNAME}"]) & chat_filter)
 async def add_to_playlist(_, message: Message):
     with suppress(MessageIdInvalid, MessageNotModified):
         admins = await get_admins(Config.CHAT)
@@ -253,15 +256,15 @@ async def add_to_playlist(_, message: Message):
             await msg.edit("Link added to playlist")
         if not Config.CALL_STATUS \
             and len(Config.playlist) >= 1:
-            await msg.edit("Downloading and Processing...")
+            await msg.edit("⌛")
             await download(Config.playlist[0], msg)
             await play()
         elif (len(Config.playlist) == 1 and Config.CALL_STATUS):
-            await msg.edit("Downloading and Processing...")
+            await msg.edit("⌛")
             await download(Config.playlist[0], msg)  
             await play()
         elif message.command[0] == "fplay":
-            await msg.edit("Downloading and Processing...")
+            await msg.edit("⌛")
             await download(Config.playlist[0], msg)  
             await play()
         else:
@@ -279,7 +282,7 @@ async def add_to_playlist(_, message: Message):
             await download(track)
 
 
-@Client.on_message(filters.command(["leave", f"leave@{Config.BOT_USERNAME}"]) & admin_filter & chat_filter)
+@Client.on_message(command("leave"), filters.command(["leave", f"leave@{Config.BOT_USERNAME}"]) & admin_filter & chat_filter)
 async def leave_voice_chat(_, m: Message):
     if not Config.CALL_STATUS:        
         k=await m.reply("Not joined any voicechat.")
@@ -493,7 +496,7 @@ async def not_chat(_, m: Message):
                 InlineKeyboardButton('⚡️Change CHAT', callback_data='set_new_chat'),
             ],
             [
-                InlineKeyboardButton('No', callback_data='closesudo'),
+                
             ]
             ]
         await m.reply("This is not the group which i have been configured to play, Do you want to set this group as default CHAT?", reply_markup=InlineKeyboardMarkup(buttons))
@@ -501,8 +504,7 @@ async def not_chat(_, m: Message):
     else:
         buttons = [
             [
-                InlineKeyboardButton('⚡️Make Own Bot', url='https://github.com/subinps/VCPlayerBot'),
-                InlineKeyboardButton('🧩 Join Here', url='https://t.me/subin_works'),
+               InlineKeyboardButton('Bye', callback_data='closesudo'),
             ]
             ]
         await m.reply("<b>You can't use this bot in this group, for that you have to make your own bot from the [SOURCE CODE](https://github.com/subinps/VCPlayerBot) below.</b>", disable_web_page_preview=True, reply_markup=InlineKeyboardMarkup(buttons))

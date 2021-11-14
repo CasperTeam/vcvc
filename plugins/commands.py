@@ -28,6 +28,7 @@ from pyrogram.errors.exceptions.bad_request_400 import (
 )
 from pyrogram.types import CallbackQuery, ChatPermissions, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
+
 from utils import (
     cancel_all_schedules,
     edit_config, 
@@ -48,7 +49,72 @@ from pyrogram import (
     Client, 
     filters
 )
+import psutil
+def get_readable_time(seconds: int) -> int:
+    """Get Time So That Human Can ReadIt"""
+    count = 0
+    ping_time = ""
+    time_list = []
+    time_suffix_list = ["s", "m", "h", "days"]
 
+    while count < 4:
+        count += 1
+        if count < 3:
+            remainder, result = divmod(seconds, 60)
+        else:
+            remainder, result = divmod(seconds, 24)
+        if seconds == 0 and remainder == 0:
+            break
+        time_list.append(int(result))
+        seconds = int(remainder)
+
+    for x in range(len(time_list)):
+        time_list[x] = str(time_list[x]) + time_suffix_list[x]
+    if len(time_list) == 4:
+        ping_time += time_list.pop() + ", "
+
+    time_list.reverse()
+    ping_time += ":".join(time_list)
+
+    return ping_time
+    
+bot_start_time = time.time()
+async def bot_sys_stats():
+    bot_uptime = int(time.time() - bot_start_time)
+    cpu = psutil.cpu_percent()
+    mem = psutil.virtual_memory().percent
+    disk = psutil.disk_usage("/").percent
+    process = psutil.Process(os.getpid())
+    stats = f"""
+
+ UPTIME: {get_readable_time((time.time() - bot_start_time))}
+ BOT: {round(process.memory_info()[0] / 1024 ** 2)} MB
+ CPU: {cpu}%
+ RAM: {mem}%
+ DISK: {disk}%
+"""
+    return stats
+
+@Client.on_callback_query()
+async def cb_handler(client, query):
+    data = query.data
+        
+    if data == "sm":
+        text = await bot_sys_stats()
+        await query.answer(text, show_alert=True)
+
+
+keyboard = InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                          "🖥System stats 🖥",
+                          callback_data="sys_info"
+                          ),
+                    ],
+                ]
+            )
+            
 IST = pytz.timezone(Config.TIME_ZONE)
 if Config.DATABASE_URI:
     from utils import db
@@ -82,6 +148,12 @@ async def start(client, message):
                     [
                         InlineKeyboardButton(f"Misc", callback_data='help_misc'),
                         InlineKeyboardButton("Close", callback_data="close"),
+                    ],
+                    [
+                        InlineKeyboardButton(
+                          "🖥System stats 🖥",
+                          callback_data="sys_info"
+                          ),
                     ],
                 ]
                 )
@@ -132,13 +204,14 @@ async def start(client, message):
             await msg.edit(f"Choose the day of the month you want to schedule the voicechat.\nToday is {thisday} {smonth} {year}. Chooosing a date preceeding today will be considered as next year {year+1}", reply_markup=InlineKeyboardMarkup(button))
 
 
-
         return
     buttons = [
         [
-            InlineKeyboardButton('⚙️ Update Channel', url='https://t.me/subin_works'),
-            InlineKeyboardButton('🧩 Source', url='https://github.com/subinps/VCPlayerBot')
-        ],
+                         InlineKeyboardButton(
+                            "✨Click Here!✨",
+                            callback_data="sm"
+                        )
+                    ],
         [
             InlineKeyboardButton('👨🏼‍🦯 Help', callback_data='help_main'),
             InlineKeyboardButton('🗑 Close', callback_data='close'),
